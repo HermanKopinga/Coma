@@ -41,38 +41,41 @@ const byte sevenSegPins[2][8] = {
 // AA BB FF DD EE CC GG DP
   { 4, 6, 5,10,11, 8, 7, 9},
 // AA BB FF DD EE CC GG DP
-  {16, 7,15,12,13,10, 9,11}
+  {40,40,40,40,40,40,40,4}
 };
 
-const int digit11pin = 0;
-const int digit12pin = 1;
+const int digit11pin = 12;
+const int digit12pin = 13;
 const int digit13pin = 2;
 const int digit14pin = 3;
-const int digit21pin = 17;
-const int digit22pin = 14;
-const int digit23pin = 6;
-const int digit24pin = 8;
+const int digit21pin = 40;
+const int digit22pin = 40;
+const int digit23pin = 40;
+const int digit24pin = 40;
 
 int dig1Min = 0;
-int dig1Max = 24;
-int dig2Min = 25;
-int dig2Max = 49;
-int dig3Min = 50;
-int dig3Max = 74;
-int dig4Min = 75;
-int dig4Max = 100;
+int dig1Max = 4;
+int dig2Min = 5;
+int dig2Max = 9;
+int dig3Min = 10;
+int dig3Max = 14;
+int dig4Min = 15;
+int dig4Max = 20;
 
 long ticks = 0;
 int n = 0;
 const byte divide = 1;
-byte reset = 100;
+byte reset = 20;
 int num;
-int value0;                    // The number displayed on the LEDs.
+long value0;                    // The number displayed on the LEDs.
 
 Bounce button0 = Bounce(A4, 10);
 Bounce button1 = Bounce(A5, 10);  // 10 ms debounce time is appropriate
 
+bool debug = 0;
+
 unsigned long startTime = 0;
+unsigned long lastTouch = 0;
 long money = 0;
 long totalCostOfMeeting = 0;
 unsigned long lastUpdateTime = 0;
@@ -103,12 +106,8 @@ void setup() {
   // shorts it to ground.  When released, the pin reads HIGH
   // because the pullup resistor connects to +5 volts inside
   // the chip.  
-  pinMode(1, INPUT_PULLUP);
-  pinMode(2, INPUT_PULLUP);
-  pinMode(3, INPUT_PULLUP);
-  pinMode(4, INPUT_PULLUP);
-  pinMode(5, INPUT_PULLUP);
-  pinMode(6, INPUT_PULLUP);
+  pinMode(A4, INPUT_PULLUP);
+  pinMode(A5, INPUT_PULLUP);
 
   //Set all the LED pins as output.
   for (byte pinCount = 0; pinCount < 8; pinCount++) {
@@ -204,37 +203,40 @@ void loop() {
     money = 0;
   }
 
-
   if (sliderValue0 - sliderStored0 >= sliderThreshold || sliderStored0 - sliderValue0 >= sliderThreshold) {
-    Serial.println(sliderValue0);  
+    if (debug) Serial.println(sliderValue0);  
     sliderStored0 = sliderValue0;
     people = map(sliderStored0, 0, 1023, 1, 12);
+    value0 = people;
+    lastTouch = millis();
   }    
   if (sliderValue1 - sliderStored1 >= sliderThreshold || sliderStored1 - sliderValue1 >= sliderThreshold) {
-    Serial.println(sliderValue1);  
+    if (debug) Serial.println(sliderValue1);  
     sliderStored1 = sliderValue1;
     rate = map(sliderStored1, 0, 1023, 10, 1000)/10*10*100;
+    value0 = rate/100;
+    lastTouch = millis();    
   } 
   
   if (running) {
    money = money + (people * rate * (millis() - lastUpdateTime)/3600);
    lastUpdateTime = millis();
-   Serial.print(people);
-   Serial.print(' ');
-   Serial.print(rate);
-   Serial.print(' ');
-   Serial.print(lastUpdateTime);
-   Serial.print(' ');
-   Serial.print(millis());
-   Serial.print(' ');
-   Serial.print(millis()/1000/60);
-   Serial.print(' ');    
-   Serial.print(money/1000/100);
-   Serial.print(',');        
+   if (debug) Serial.print(people);
+   if (debug) Serial.print(' ');
+   if (debug) Serial.print(rate);
+   if (debug) Serial.print(' ');
+   if (debug) Serial.print(lastUpdateTime);
+   if (debug) Serial.print(' ');
+   if (debug) Serial.print(millis());
+   if (debug) Serial.print(' ');
+   if (debug) Serial.print(millis()/1000/60);
+   if (debug) Serial.print(' ');    
+   if (debug) Serial.print(money/1000/100);
+   if (debug) Serial.print(',');        
    if (money/1000%100 <10) {
-     Serial.print('0');
+     if (debug) Serial.print('0');
    }
-   Serial.println(money/1000%100);
+   if (debug) Serial.println(money/1000%100);
   } 
   ////////////// 
   // (Re)Write the digits
@@ -247,14 +249,14 @@ void loop() {
     digitalWrite(digit12pin,0);
     digitalWrite(digit13pin,0);
     digitalWrite(digit14pin,0);
-    digitalWrite(digit22pin,0);
-    digitalWrite(digit23pin,0);
-    digitalWrite(digit24pin,0);    
+   // digitalWrite(digit22pin,0);
+   // digitalWrite(digit23pin,0);
+   // digitalWrite(digit24pin,0);    
     sevenSegWrite(0, value0 % 10000 / 1000, 1);
     //sevenSegWrite(1, value1 % 10000 / 1000, 1);    
-    if (value0 >= 1000) {    
+//    if (value0 >= 1000) {    
       digitalWrite(digit11pin,1);
-    }
+//    }
 //    if (value1 >= 1000) {
 //      digitalWrite(digit21pin,1);    
 //    }
@@ -265,14 +267,14 @@ void loop() {
     digitalWrite(digit11pin,0);
     digitalWrite(digit13pin,0);
     digitalWrite(digit14pin,0);
-    digitalWrite(digit21pin,0);
-    digitalWrite(digit23pin,0);
-    digitalWrite(digit24pin,0);    
+    //digitalWrite(digit21pin,0);
+    //digitalWrite(digit23pin,0);
+    //digitalWrite(digit24pin,0);    
     sevenSegWrite(0, value0 % 1000 / 100, 1);
 //    sevenSegWrite(1, value1 % 1000 / 100, 1);    
-    if (value0 >= 100) {
+    //if (value0 >= 100) {
       digitalWrite(digit12pin,1);
-    }
+    //}
 //    if (value1 >= 100) {    
 //      digitalWrite(digit22pin,1);    
 //    }
@@ -283,14 +285,14 @@ void loop() {
     digitalWrite(digit11pin,0);
     digitalWrite(digit12pin,0);
     digitalWrite(digit14pin,0);
-    digitalWrite(digit21pin,0);
-    digitalWrite(digit22pin,0);
-    digitalWrite(digit24pin,0);    
+    //digitalWrite(digit21pin,0);
+    //digitalWrite(digit22pin,0);
+    //digitalWrite(digit24pin,0);    
     sevenSegWrite(0, value0 % 100 / 10, 1);
 //    sevenSegWrite(1, value1 % 100 / 10, 1);
-    if (value0 >= 10) {
+   // if (value0 >= 10) {
       digitalWrite(digit13pin,1);
-    }
+   // }
 //    if (value1 >= 10) {
 //      digitalWrite(digit23pin,1);    
 //    }
@@ -301,13 +303,13 @@ void loop() {
     digitalWrite(digit11pin,0);
     digitalWrite(digit12pin,0);
     digitalWrite(digit13pin,0);    
-    digitalWrite(digit21pin,0);
-    digitalWrite(digit22pin,0);
-    digitalWrite(digit23pin,0);        
+    //digitalWrite(digit21pin,0);
+    //digitalWrite(digit22pin,0);
+    //digitalWrite(digit23pin,0);        
     sevenSegWrite(0, value0 % 10, 1);
 //    sevenSegWrite(1, value1 % 10, 1);
     digitalWrite(digit14pin,1);        
-    digitalWrite(digit24pin,1);            
+//    digitalWrite(digit24pin,1);            
   } 
 
   // The rest of the time the leds are off, saves 10 mA power.
@@ -321,16 +323,12 @@ void loop() {
   // Ticks won't be bigger than reset.
   if(ticks > reset) {
     ticks = -1;
-    num++;
+    if (millis() - lastTouch > 2000) {
+      value0 = money/1000;
+    }
   }
 
-  // Every (10 * ticks) loops the value we work with is updated.
-  if(num > 10) {
-    num = 0;
-    value0 = money/1000;
-//    value1 =  / 1000;    
-  }
- // delay(1);
+ 
 }
 
 
