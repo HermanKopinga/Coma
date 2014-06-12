@@ -39,15 +39,15 @@ e  c
 
 const byte sevenSegPins[2][8] = {
 // AA BB FF DD EE CC GG DP
-  { 4, 6, 5,10,11, 8, 7, 9},
+  {11, 7,10, 2, 1, 4, 5, 3},
 // AA BB FF DD EE CC GG DP
   {40,40,40,40,40,40,40,4}
 };
 
 const int digit11pin = 12;
-const int digit12pin = 13;
-const int digit13pin = 2;
-const int digit14pin = 3;
+const int digit12pin = 9;
+const int digit13pin = 8;
+const int digit14pin = 6;
 const int digit21pin = 40;
 const int digit22pin = 40;
 const int digit23pin = 40;
@@ -69,10 +69,11 @@ byte reset = 20;
 int num;
 long value0;                    // The number displayed on the LEDs.
 
-Bounce button0 = Bounce(A4, 10);
-Bounce button1 = Bounce(A5, 10);  // 10 ms debounce time is appropriate
+Bounce button0 = Bounce(0, 10);
 
+unsigned long  timeOfPress = 0;
 bool debug = 0;
+bool ignoreThisPress = 0;
 
 unsigned long startTime = 0;
 unsigned long lastTouch = 0;
@@ -106,7 +107,7 @@ void setup() {
   // shorts it to ground.  When released, the pin reads HIGH
   // because the pullup resistor connects to +5 volts inside
   // the chip.  
-  pinMode(A4, INPUT_PULLUP);
+  pinMode(0, INPUT_PULLUP);
   pinMode(A5, INPUT_PULLUP);
 
   //Set all the LED pins as output.
@@ -129,14 +130,14 @@ void setup() {
   digitalWrite(sevenSegPins[0][7], 1);
   //digitalWrite(sevenSegPins[1][7], 1);    
 
-  pinMode(A0, INPUT);
-  pinMode(A1, INPUT);
+  pinMode(A6, INPUT);
+  pinMode(A7, INPUT);
 
   Serial.begin(115200);
 
   // To avoid jump at first connect.
-  sliderStored0 = sliderValue0 = analogRead(A0);
-  sliderStored1 = sliderValue1 = analogRead(A1);
+  sliderStored0 = sliderValue0 = analogRead(A6);
+  sliderStored1 = sliderValue1 = analogRead(A7);
 
   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
     readings0[thisReading] = 0;        
@@ -152,7 +153,10 @@ void sevenSegWrite(byte displayid, byte digit, byte dot)  {
   }
 
   // Dots OFF.
-  digitalWrite(sevenSegPins[displayid][7], 1);
+  if (millis() - lastTouch <= 2000) {
+    dot = 1;
+  }
+  digitalWrite(sevenSegPins[displayid][7], dot);
 }
 
 void loop() {
@@ -164,8 +168,8 @@ void loop() {
   total1= total1 - readings1[index];         
 
   // read from the sensor:  
-  readings0[index] = analogRead(A0); 
-  readings1[index] = analogRead(A1); 
+  readings0[index] = analogRead(A6); 
+  readings1[index] = analogRead(A7); 
 
   // add the reading to the total:
   total0= total0 + readings0[index];       
@@ -187,9 +191,19 @@ void loop() {
   // delays in loop(), so this runs repetitively at a rate
   // faster than the buttons could be pressed and released.
   button0.update();
-  button1.update();
-
+  
   if (button0.fallingEdge()) {
+    timeOfPress = millis();
+    ignoreThisPress = 0;
+  }
+  
+  if (button0.read() == LOW && millis() - timeOfPress > 1200) {
+      money = 0;  
+      running = 0;      
+      ignoreThisPress = 1;
+  }
+  
+  if (button0.risingEdge() && !ignoreThisPress) {
     // start & stop
     if (running) {
       running = 0;
@@ -198,9 +212,6 @@ void loop() {
       running = 1;
       lastUpdateTime = millis();
     }
-  }
-  if (button1.fallingEdge()) {
-    money = 0;
   }
 
   if (sliderValue0 - sliderStored0 >= sliderThreshold || sliderStored0 - sliderValue0 >= sliderThreshold) {
@@ -270,7 +281,7 @@ void loop() {
     //digitalWrite(digit21pin,0);
     //digitalWrite(digit23pin,0);
     //digitalWrite(digit24pin,0);    
-    sevenSegWrite(0, value0 % 1000 / 100, 1);
+    sevenSegWrite(0, value0 % 1000 / 100, 0);
 //    sevenSegWrite(1, value1 % 1000 / 100, 1);    
     //if (value0 >= 100) {
       digitalWrite(digit12pin,1);
