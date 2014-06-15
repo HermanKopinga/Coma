@@ -41,17 +41,17 @@ const byte sevenSegPins[2][8] = {
 // AA BB FF DD EE CC GG DP
   {11, 7,10, 2, 1, 4, 5, 3},
 // AA BB FF DD EE CC GG DP
-  {40,40,40,40,40,40,40,4}
+  {22,18,21,39,38,41,42,40}
 };
 
 const int digit11pin = 12;
 const int digit12pin = 9;
 const int digit13pin = 8;
 const int digit14pin = 6;
-const int digit21pin = 40;
-const int digit22pin = 40;
-const int digit23pin = 40;
-const int digit24pin = 40;
+const int digit21pin = 23;
+const int digit22pin = 20;
+const int digit23pin = 19;
+const int digit24pin = 43;
 
 int dig1Min = 0;
 int dig1Max = 4;
@@ -108,12 +108,11 @@ void setup() {
   // because the pullup resistor connects to +5 volts inside
   // the chip.  
   pinMode(0, INPUT_PULLUP);
-  pinMode(A5, INPUT_PULLUP);
 
   //Set all the LED pins as output.
   for (byte pinCount = 0; pinCount < 8; pinCount++) {
     pinMode(sevenSegPins[0][pinCount], OUTPUT);
-   // pinMode(sevenSegPins[1][pinCount], OUTPUT);
+    pinMode(sevenSegPins[1][pinCount], OUTPUT);
   }
   
   // Common pins for the 4 digits.
@@ -121,14 +120,14 @@ void setup() {
   pinMode(digit12pin, OUTPUT);
   pinMode(digit13pin, OUTPUT);
   pinMode(digit14pin, OUTPUT);  
-  //pinMode(digit21pin, OUTPUT);
-  //pinMode(digit22pin, OUTPUT);
-  //pinMode(digit23pin, OUTPUT);
-  //pinMode(digit24pin, OUTPUT);
+  pinMode(digit21pin, OUTPUT);
+  pinMode(digit22pin, OUTPUT);
+  pinMode(digit23pin, OUTPUT);
+  pinMode(digit24pin, OUTPUT);
 
   // Start with all 'dots' off.
   digitalWrite(sevenSegPins[0][7], 1);
-  //digitalWrite(sevenSegPins[1][7], 1);    
+  digitalWrite(sevenSegPins[1][7], 1);    
 
   pinMode(A6, INPUT);
   pinMode(A7, INPUT);
@@ -260,17 +259,17 @@ void loop() {
     digitalWrite(digit12pin,0);
     digitalWrite(digit13pin,0);
     digitalWrite(digit14pin,0);
-   // digitalWrite(digit22pin,0);
-   // digitalWrite(digit23pin,0);
-   // digitalWrite(digit24pin,0);    
+    digitalWrite(digit22pin,0);
+    digitalWrite(digit23pin,0);
+    digitalWrite(digit24pin,0);    
     sevenSegWrite(0, value0 % 10000 / 1000, 1);
-    //sevenSegWrite(1, value1 % 10000 / 1000, 1);    
-//    if (value0 >= 1000) {    
+    sevenSegWrite(1, value0 % 100000000 / 10000000, 1);    
+    if (value0 >= 1000) {    
       digitalWrite(digit11pin,1);
-//    }
-//    if (value1 >= 1000) {
-//      digitalWrite(digit21pin,1);    
-//    }
+    }
+    if (value0 >= 10000000) {
+      digitalWrite(digit21pin,1);    
+    }
   }
 
   // 2nd significant digit
@@ -278,17 +277,15 @@ void loop() {
     digitalWrite(digit11pin,0);
     digitalWrite(digit13pin,0);
     digitalWrite(digit14pin,0);
-    //digitalWrite(digit21pin,0);
-    //digitalWrite(digit23pin,0);
-    //digitalWrite(digit24pin,0);    
+    digitalWrite(digit21pin,0);
+    digitalWrite(digit23pin,0);
+    digitalWrite(digit24pin,0);    
     sevenSegWrite(0, value0 % 1000 / 100, 0);
-//    sevenSegWrite(1, value1 % 1000 / 100, 1);    
-    //if (value0 >= 100) {
-      digitalWrite(digit12pin,1);
-    //}
-//    if (value1 >= 100) {    
-//      digitalWrite(digit22pin,1);    
-//    }
+    sevenSegWrite(1, value0 % 10000000 / 1000000, 1);    
+    digitalWrite(digit12pin,1);
+    if (value0 >= 1000000) {    
+      digitalWrite(digit22pin,1);    
+    }
   }
 
   // Third significant digit  
@@ -296,17 +293,15 @@ void loop() {
     digitalWrite(digit11pin,0);
     digitalWrite(digit12pin,0);
     digitalWrite(digit14pin,0);
-    //digitalWrite(digit21pin,0);
-    //digitalWrite(digit22pin,0);
-    //digitalWrite(digit24pin,0);    
+    digitalWrite(digit21pin,0);
+    digitalWrite(digit22pin,0);
+    digitalWrite(digit24pin,0);    
     sevenSegWrite(0, value0 % 100 / 10, 1);
-//    sevenSegWrite(1, value1 % 100 / 10, 1);
-   // if (value0 >= 10) {
-      digitalWrite(digit13pin,1);
-   // }
-//    if (value1 >= 10) {
-//      digitalWrite(digit23pin,1);    
-//    }
+    sevenSegWrite(1, value0 % 1000000 / 100000, 1);
+    digitalWrite(digit13pin,1);
+    if (value0 >= 100000) {
+      digitalWrite(digit23pin,1);    
+    }
   }
 
   // Least significant digit  
@@ -314,22 +309,16 @@ void loop() {
     digitalWrite(digit11pin,0);
     digitalWrite(digit12pin,0);
     digitalWrite(digit13pin,0);    
-    //digitalWrite(digit21pin,0);
-    //digitalWrite(digit22pin,0);
-    //digitalWrite(digit23pin,0);        
+    digitalWrite(digit21pin,0);
+    digitalWrite(digit22pin,0);
+    digitalWrite(digit23pin,0);        
     sevenSegWrite(0, value0 % 10, 1);
-//    sevenSegWrite(1, value1 % 10, 1);
+    sevenSegWrite(1, value0 % 100000 / 10000, 1);
     digitalWrite(digit14pin,1);        
-//    digitalWrite(digit24pin,1);            
+    if (value0 >= 10000) {
+      digitalWrite(digit24pin,1);                
+    }   
   } 
-
-  // The rest of the time the leds are off, saves 10 mA power.
-  else {
-    digitalWrite(digit11pin,0);
-    digitalWrite(digit12pin,0);
-    digitalWrite(digit13pin,0);     
-    digitalWrite(digit14pin,0);
-  }
 
   // Ticks won't be bigger than reset.
   if(ticks > reset) {
